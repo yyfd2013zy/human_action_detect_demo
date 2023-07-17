@@ -18,12 +18,12 @@ class HeadPoseCHeck:
         # 这里应该计算一下鼻子与两个肩膀连线的高度差，添加一个距离参数进行判断
         headAngle = 180 - angle
         print("head angle",headAngle)
-        if headAngle < 110:
-            return "低头"
-        elif headAngle < 140:
-            return "平视"
-        elif headAngle < 160:
-            return "抬头"
+        if headAngle > 160:
+            return "head up"
+        elif headAngle > 120:
+            return "head front"
+        elif headAngle > 80:
+            return "head down"
         else:
-            return("仰头")
+            return("none")
         pass

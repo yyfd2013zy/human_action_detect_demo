@@ -104,28 +104,11 @@ def process_frame(img_bgr):
 
     for idx in range(num_bbox):  # 遍历每个框
 
-        # 获取该框坐标
-        bbox_xyxy = bboxes_xyxy[idx]
-
-        # 获取框的预测类别（对于关键点检测，只有一个类别）
-        bbox_label = results[0].names[0]
-
-        # 画框
-        img_bgr = cv2.rectangle(img_bgr, (bbox_xyxy[0], bbox_xyxy[1]), (bbox_xyxy[2], bbox_xyxy[3]), bbox_color,
-                                bbox_thickness)
-
-        # 写框类别文字：图片，文字字符串，文字左上角坐标，字体，字体大小，颜色，字体粗细
-        img_bgr = cv2.putText(img_bgr,
-                              bbox_label,
-                              (bbox_xyxy[0] + bbox_labelstr['offset_x'], bbox_xyxy[1] + bbox_labelstr['offset_y']),
-                              cv2.FONT_HERSHEY_SIMPLEX,
-                              bbox_labelstr['font_size'],
-                              bbox_color,
-                              bbox_labelstr['font_thickness'])
-
         bbox_keypoints = bboxes_keypoints[idx]  # 该框所有关键点坐标和置信度
 
-
+        #vinda 自定义数据
+        headposeStatus = ""
+        sitOrStandStatus = ""
         lineIndex = 0
         # 画该框的骨架连接
         for skeleton in skeleton_map:
@@ -142,9 +125,16 @@ def process_frame(img_bgr):
 
             utils.addPoseLineData(srt_kpt_x, srt_kpt_y, dst_kpt_x, dst_kpt_y)
 
+            def my_callback(sitOrStand,headAction,riseHand):
+                # 在回调函数中处理接收到的参数
+                nonlocal headposeStatus
+                nonlocal sitOrStandStatus
+                headposeStatus = headAction
+                sitOrStandStatus = sitOrStand
+                print("Callback called with parameters:", sitOrStand,headAction,riseHand)
             # 最后一个数据处理完毕,开始进行向量角计算
             if lineIndex == len(skeleton_map):
-                utils.startCaculate()
+                utils.startCaculate(my_callback)
 
             # 获取骨架连接颜色
             skeleton_color = skeleton['color']
@@ -159,7 +149,33 @@ def process_frame(img_bgr):
                                color=skeleton_color,
                                thickness=skeleton_thickness)
 
-        # 画该框的关键点
+        # ------------------------------------------------绘制人体框-----------------------------------------
+        # 获取该框坐标
+        bbox_xyxy = bboxes_xyxy[idx]
+        # 获取框的预测类别（对于关键点检测，只有一个类别）
+        bbox_label = results[0].names[0]
+        # 画框
+        img_bgr = cv2.rectangle(img_bgr, (bbox_xyxy[0], bbox_xyxy[1]), (bbox_xyxy[2], bbox_xyxy[3]), bbox_color,
+                                bbox_thickness)
+        # 显示是否抬头
+        img_bgr = cv2.putText(img_bgr,
+                              headposeStatus,
+                              (bbox_xyxy[0] + bbox_labelstr['offset_x'], bbox_xyxy[1] + bbox_labelstr['offset_y']),
+                              cv2.FONT_HERSHEY_SIMPLEX,
+                              bbox_labelstr['font_size'],
+                              bbox_color,
+                              bbox_labelstr['font_thickness'])
+        # 显示站立还是坐下
+        img_bgr = cv2.putText(img_bgr,
+                              sitOrStandStatus,
+                              (bbox_xyxy[0] + bbox_labelstr['offset_x'], bbox_xyxy[1] + bbox_labelstr['offset_y'] - 20),
+                              cv2.FONT_HERSHEY_SIMPLEX,
+                              bbox_labelstr['font_size'],
+                              bbox_color,
+                              bbox_labelstr['font_thickness'])
+
+
+        # 画骨骼关键点
         for kpt_id in kpt_color_map:
             # 获取该关键点的颜色、半径、XY坐标
             kpt_color = kpt_color_map[kpt_id]['color']
@@ -177,6 +193,7 @@ def process_frame(img_bgr):
                                   (kpt_x + kpt_labelstr['offset_x'], kpt_y + kpt_labelstr['offset_y']),
                                   cv2.FONT_HERSHEY_SIMPLEX, kpt_labelstr['font_size'], kpt_color,
                                   kpt_labelstr['font_thickness'])
+
 
     # 记录该帧处理完毕的时间
     end_time = time.time()
