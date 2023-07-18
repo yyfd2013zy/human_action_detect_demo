@@ -46,7 +46,7 @@ class Util:
         standOrSit = self.siteStandUtil.checkStandOrSitPose(self.poseLineDatas[2], self.poseLineDatas[3])
 
         # 判断是否举手
-        riseHand = self.riseHandCheck.checkRiseHand(self.poseLineDatas[8], self.poseLineDatas[10])
+        riseHand = self.riseHandCheck.checkRiseHand(self.poseLineDatas[8], self.poseLineDatas[10],self.poseLineDatas[9],self.poseLineDatas[11])
 
         # 判断头部姿态
         # 计算左边眼睛-左边耳朵 与 左边耳朵-左边肩膀 的向量角度
