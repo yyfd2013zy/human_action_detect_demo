@@ -9,7 +9,7 @@ from ultralytics import YOLO
 
 import torch
 
-from util.util import Util
+from pose_detect.util import Util
 
 # 有 GPU 就用 GPU，没有就用 CPU
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -94,6 +94,7 @@ def process_frame(img_bgr):
 
     # 预测框的个数
     num_bbox = len(results[0].boxes.cls)
+    print("当前检测到人数:",num_bbox)
 
     # 预测框的 xyxy 坐标
     bboxes_xyxy = results[0].boxes.xyxy.cpu().numpy().astype('uint32')

@@ -1,11 +1,11 @@
-# util.py
+# pose_detect.py
 # 用于进行向量角计算
 import math
 import numpy as np
 
-from util.pose.head_pose import HeadPoseCHeck
-from util.pose.rise_hand import RiseHandCheck
-from util.pose.site_stand import SiteStandCHeck
+from pose_detect.pose.head_pose import HeadPoseCHeck
+from pose_detect.pose.rise_hand import RiseHandCheck
+from pose_detect.pose.site_stand import SiteStandCHeck
 
 
 class Util:
@@ -40,7 +40,7 @@ class Util:
         self.poseLineDatas.append((x, y, x1, y1))
         # print("add body line data")
 
-    def startCaculate(self, callback):
+    def startCaculate(self,time_second, callback):
         print("开始计算 当前帧有", len(self.poseLineDatas), "条线")
         # 判断是站立还是坐着
         standOrSit = self.siteStandUtil.checkStandOrSitPose(self.poseLineDatas[2], self.poseLineDatas[3])

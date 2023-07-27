@@ -2,8 +2,10 @@ import math
 
 import numpy as np
 
-#角度计算类
+
+# 角度计算类
 class CaculateUtil:
+    # 计算向量角
     @staticmethod
     def calculate_angle(line1, line2):
         # 将点坐标转换为向量表示形式
@@ -45,3 +47,38 @@ class CaculateUtil:
         angle_degrees = math.degrees(angle_radians)
 
         return angle_degrees
+
+    # 计算斜率
+    @staticmethod
+    def calculate_angle_with_y(x1, y1, x2, y2):
+        # 计算斜率
+        if x2 - x1 != 0:
+            slope = (y2 - y1) / (x2 - x1)
+        else:
+            slope = float('inf')  # 斜率为正无穷
+
+        # 计算夹角（以弧度为单位）
+        angle_radians = math.atan(slope)
+
+        # 将弧度转换为角度
+        angle_degrees = math.degrees(angle_radians)
+
+        return angle_degrees
+
+    # 通过欧几里德距离（Euclidean distance）来比较目标数组与其他数组之间的接近程度
+    @staticmethod
+    def find_closest_array(target_array, other_arrays):
+        min_distance = float('inf')  # 设置一个初始的最小距离，用于比较
+        closest_index = -1
+
+        for idx, other_array in enumerate(other_arrays):
+            distance = np.sqrt(np.sum((target_array - other_array) ** 2))
+            if distance < min_distance:
+                min_distance = distance
+                closest_index = idx
+
+        # 检查所有值之间的差距是否都大于30
+        if all(abs(target_array - other_arrays[closest_index]) > 20):
+            return -1
+        else:
+            return closest_index

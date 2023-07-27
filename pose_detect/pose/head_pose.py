@@ -1,4 +1,4 @@
-from util.calculate_util import CaculateUtil
+from pose_detect.calculate_util import CaculateUtil
 
 
 class HeadPoseCHeck:
