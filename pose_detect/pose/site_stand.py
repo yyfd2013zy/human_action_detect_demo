@@ -14,7 +14,7 @@ class SiteStandCHeck:
                                      (int(line1416[0]), int(line1416[1]), int(line1416[2]), int(line1416[3])))
         # 这里应该计算一下鼻子与两个肩膀连线的高度差，添加一个距离参数进行判断
         legAngle = 180 - angle
-        print("leg angle", legAngle)
+        #print("leg angle", legAngle)
 
         if legAngle > 150:
             return "stand"

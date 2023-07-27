@@ -94,7 +94,7 @@ skeleton_map = [
 ]
 
 
-def process_frame(time_second, img_bgr):
+def process_frame(time_second, fps, img_bgr):
     print("==========开始处理")
 
     # 在视频左上角显示出当前的秒数
@@ -183,10 +183,11 @@ def process_frame(time_second, img_bgr):
             dst_kpt_x = bbox_keypoints[dst_kpt_id][0]
             dst_kpt_y = bbox_keypoints[dst_kpt_id][1]
 
+            #这里循环遍历了单个人的骨架
             utils.addPoseLineData(srt_kpt_x, srt_kpt_y, dst_kpt_x, dst_kpt_y)
 
             def my_callback(sitOrStand, headAction, riseHand):
-                # 在回调函数中处理接收到的参数
+                # 在回调函数中处理接收到的参数-tips:这里1s回调一次
                 nonlocal headposeStatus
                 nonlocal sitOrStandStatus
                 nonlocal riseHandStatus
@@ -196,7 +197,7 @@ def process_frame(time_second, img_bgr):
 
             # 最后一个数据处理完毕,开始进行向量角计算
             if lineIndex == len(skeleton_map):
-                utils.startCaculate(time_second,my_callback)
+                utils.startCaculate(id_list[closest_idx],time_second,fps,my_callback)
 
             # 获取骨架连接颜色
             skeleton_color = skeleton['color']
@@ -319,7 +320,7 @@ def generate_video(input_path='video/1.mp4'):
                     time_per_frame = 1 / fps
                     time_in_seconds = int(pbar.n * time_per_frame)
                     print(f"分析此帧数据：{time_in_seconds} 秒")
-                    frame = process_frame(time_in_seconds, frame)
+                    frame = process_frame(time_in_seconds,fps, frame)
                 except:
                     print('error')
                     pass

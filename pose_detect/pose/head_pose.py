@@ -17,7 +17,7 @@ class HeadPoseCHeck:
         # angle1 = self.angle_between_points((x1, y1), (x2, y2), (x4, y4))
         # 这里应该计算一下鼻子与两个肩膀连线的高度差，添加一个距离参数进行判断
         headAngle = 180 - angle
-        print("head angle",headAngle)
+        #print("head angle",headAngle)
         if headAngle > 160:
             return "head up"
         elif headAngle > 120:
