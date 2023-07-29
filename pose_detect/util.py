@@ -90,7 +90,16 @@ class Util:
                 print("抬头  数据", self.headUpInOneSecond)
                 print("平视  数据", self.headFrontInOneSecond)
                 print("低头  数据", self.headDownInOneSecond)
-                self.startCheckThisSecondPose()
+                """
+                   !!!重要函数，判断当前这一s的人员以及动作
+
+                   参数：
+                   fps :  当前视频帧数
+
+                   返回 :
+                   callback : 实时回调这一阵的动作姿态
+                """
+                self.startCheckThisSecondPose(fps=fps, time=(time_second - 1))
             self.timeRecord = time_second
         else:
             print("封装当前帧数据")
@@ -139,14 +148,130 @@ class Util:
                     # 如果不存在，设置值为1
                     self.headDownInOneSecond[track_id] = 1
 
-    def startCheckThisSecondPose(self):
+    def startCheckThisSecondPose(self, fps, time):
         """
           开始预估1s内的姿态数据
+          threshold代表人体置信度-由百分比*帧率得出
         """
+        # 判断的一些置信度的数值
+        # 人体追踪稳定性置信度
+        bodyTrackPercent = 0.6
+        bodyTrackThreshold = fps * bodyTrackPercent
+        # 坐姿和站立的置信度
+        siteStandPercent = 0.6
+        siteStandThreshold = fps * siteStandPercent
+        # 头部姿态判断置信度小一些，因为头部姿态变化较快，较微小
+        headPosePercent = 0.5
+        headPosdThreshold = fps * headPosePercent
+
+        # 此秒内的识别数据记录
+        bodyTrackCount = 0
+        siteSumCount = 0
+        standSumCount = 0
+        headUpSumCount = 0
+        headFrontSumCount = 0
+        headDownSumCount = 0
+
+        print(f"<<<<<<<<<<<<<<<<<<<<< 开始分析第{time}s数据 fps:{fps} "
+              f"\n percent:{bodyTrackPercent} "
+              f"\n bodyThreshold:{bodyTrackThreshold}"
+              f"\n siteStandThreshold:{siteStandThreshold}"
+              f"\n headPosdThreshold:{headPosdThreshold}"
+              )
+        for key, value in self.bodyTrackidInOneSecond.items():
+            if value > bodyTrackThreshold:
+                print(f"第{time}s id:{key} 稳定识别")
+                bodyTrackCount += 1
+                # 认为这1s稳定识别,那么进行姿态判断
+                siteCount = self.siteInOneSecond.get(key, -1)
+                standCount = self.standInOneSecond.get(key, -1)
+                # 此秒内坐姿以及站姿均大于阈值数量，那么取这两个值中较大值进行判定
+                if siteCount >= siteStandThreshold and standCount >= siteStandThreshold:
+                    if siteCount > standCount:
+                        siteSumCount += 1
+                        print("坐姿")
+                    else:
+                        standSumCount += 1
+                        print("站姿")
+                elif siteCount >= siteStandThreshold:
+                    siteSumCount += 1
+                    print("坐姿")
+                elif standCount >= siteStandThreshold:
+                    standSumCount += 1
+                    print("站姿")
+                else:
+                    print("坐姿站姿无法判断")
+
+                # 此秒内头部姿态判定
+                headUpCount = self.headUpInOneSecond.get(key, -1)
+                headFrontCount = self.headFrontInOneSecond.get(key, -1)
+                headDownCount = self.headDownInOneSecond.get(key, -1)
+                if headUpCount >= headPosdThreshold and headFrontCount >= headPosdThreshold and headDownCount >= headPosdThreshold:
+                    # 比较这三个值中的最大值，并输出对应姿态
+                    max_count = max(headUpCount, headFrontCount, headDownCount)
+                    if max_count == headUpCount:
+                        headUpSumCount += 1
+                        print("抬头")
+                    elif max_count == headFrontCount:
+                        headFrontSumCount += 1
+                        print("正视")
+                    else:
+                        headDownSumCount += 1
+                        print("低头")
+                # 判断是否有两个值大于threshold
+                elif headUpCount >= headPosdThreshold and headFrontCount >= headPosdThreshold:
+                    # 比较这两个值中的最大值，并输出对应姿态
+                    max_count = max(headUpCount, headFrontCount)
+                    if max_count == headUpCount:
+                        headUpSumCount += 1
+                        print("抬头")
+                    else:
+                        headFrontSumCount += 1
+                        print("正视")
+                elif headUpCount >= headPosdThreshold and headDownCount >= headPosdThreshold:
+                    # 比较这两个值中的最大值，并输出对应姿态
+                    max_count = max(headUpCount, headDownCount)
+                    if max_count == headUpCount:
+                        headUpSumCount += 1
+                        print("抬头")
+                    else:
+                        headDownSumCount += 1
+                        print("低头")
+                elif headFrontCount >= headPosdThreshold and headDownCount >= headPosdThreshold:
+                    # 比较这两个值中的最大值，并输出对应姿态
+                    max_count = max(headFrontCount, headDownCount)
+                    if max_count == headFrontCount:
+                        headFrontSumCount += 1
+                        print("正视")
+                    else:
+                        headDownSumCount += 1
+                        print("低头")
+                # 判断是否只有一个值大于threshold
+                elif headUpCount >= headPosdThreshold:
+                    headUpSumCount += 1
+                    print("抬头")
+                elif headFrontCount >= headPosdThreshold:
+                    headFrontSumCount += 1
+                    print("正视")
+                elif headDownCount >= headPosdThreshold:
+                    headDownSumCount += 1
+                    print("低头")
+                else:
+                    print("头部姿态无法判")
+
         self.bodyTrackidInOneSecond = {}
         self.siteInOneSecond = {}
         self.standInOneSecond = {}
         self.headUpInOneSecond = {}
         self.headFrontInOneSecond = {}
         self.headDownInOneSecond = {}
+        print(f"第{time}s"
+              f"\n 识别人数:{bodyTrackCount}"
+              f"\n 坐姿人数:{siteSumCount}"
+              f"\n 站姿人数:{standSumCount}"
+              f"\n 抬头人数:{headUpSumCount}"
+              f"\n 平视人数:{headFrontSumCount}"
+              f"\n 低头人数:{headDownSumCount}"
+              )
+        print(f"<<<<<<<<<<<<<<<<<<<<< 第{time}s数据分析完毕")
         pass

@@ -150,11 +150,11 @@ def process_frame(time_second, fps, img_bgr):
         lineIndex = 0
 
         # 获取当前人员框的的追踪ID 根据人体框的近似值进行取值
-        print(f"此人框数据 {bboxes_xyxy[idx]}")
+        #print(f"此人框数据 {bboxes_xyxy[idx]}")
         id_list = []
         other_arrays = []
         for xmin, ymin, xmax, ymax, track_id in tracks:
-            print(f"遍历追踪ID数据 track_id:{track_id} xmin:{xmin} ymin:{ymin} xmax:{xmax} ymax:{ymax}")
+            #print(f"遍历追踪ID数据 track_id:{track_id} xmin:{xmin} ymin:{ymin} xmax:{xmax} ymax:{ymax}")
             this_list = []
             this_list.append(xmin)
             this_list.append(ymin)
@@ -345,4 +345,4 @@ def generate_video(input_path='video/1.mp4'):
     print('视频已保存', output_path)
 
 
-generate_video(input_path='video/Ip22.mp4')
+generate_video(input_path='video/1.mp4')
