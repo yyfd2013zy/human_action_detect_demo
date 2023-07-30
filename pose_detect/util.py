@@ -51,7 +51,7 @@ class Util:
         self.poseLineDatas.append((x, y, x1, y1))
         # print("add body line data")
 
-    def startCaculate(self, track_id, time_second, fps, callback):
+    def startCaculate(self, track_id, time_second, fps, one_frame_callback, one_second_callback):
         """
            开始估计这一帧的人体姿态。
 
@@ -61,7 +61,7 @@ class Util:
            fps :  当前视频帧数
 
            返回 :
-           callback : 实时回调这一阵的动作姿态
+           one_frame_callback : 实时回调这一帧的动作姿态
         """
         print("开始计算 当前track_id:", track_id, " 当前秒数:", time_second, " 视频帧数:", fps)
         # 判断是站立还是坐着
@@ -75,7 +75,7 @@ class Util:
         # 计算左边眼睛-左边耳朵 与 左边耳朵-左边肩膀 的向量角度
         headPose = self.headPoseUtil.checkHeadPose(self.poseLineDatas[16], self.poseLineDatas[18])
         print("头部姿态:", headPose)
-        callback(standOrSit, headPose, riseHand)
+        one_frame_callback(standOrSit, headPose, riseHand)
         self.poseLineDatas = []
 
         if time_second != self.timeRecord:
@@ -92,14 +92,8 @@ class Util:
                 print("低头  数据", self.headDownInOneSecond)
                 """
                    !!!重要函数，判断当前这一s的人员以及动作
-
-                   参数：
-                   fps :  当前视频帧数
-
-                   返回 :
-                   callback : 实时回调这一阵的动作姿态
                 """
-                self.startCheckThisSecondPose(fps=fps, time=(time_second - 1))
+                self.startCheckThisSecondPose(fps=fps, time=(time_second - 1), one_second_callback=one_second_callback)
             self.timeRecord = time_second
         else:
             print("封装当前帧数据")
@@ -148,7 +142,7 @@ class Util:
                     # 如果不存在，设置值为1
                     self.headDownInOneSecond[track_id] = 1
 
-    def startCheckThisSecondPose(self, fps, time):
+    def startCheckThisSecondPose(self, fps, time, one_second_callback):
         """
           开始预估1s内的姿态数据
           threshold代表人体置信度-由百分比*帧率得出
@@ -273,5 +267,12 @@ class Util:
               f"\n 平视人数:{headFrontSumCount}"
               f"\n 低头人数:{headDownSumCount}"
               )
+        try:
+            one_second_callback(time, bodyTrackCount, siteSumCount, standSumCount, headUpSumCount, headFrontSumCount,
+                                headDownSumCount)
+        except Exception as e:
+            # 当发生异常时，异常信息会被捕获到这里，并打印出来
+            print("发生了异常：", e)
+
         print(f"<<<<<<<<<<<<<<<<<<<<< 第{time}s数据分析完毕")
         pass

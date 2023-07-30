@@ -1,3 +1,5 @@
+import json
+
 import cv2
 import numpy as np
 import time
@@ -93,9 +95,52 @@ skeleton_map = [
     {'srt_kpt_id': 4, 'dst_kpt_id': 6, 'color': [255, 18, 200], 'thickness': 2}  # 左边耳朵-左边肩膀
 ]
 
+outputJsonData = {
+            "resultCode": "",
+            "resultMsg": "",
+            "detectStartTimeTemp": "",
+            "detectFinishTemp": "",
+            "videoName": "",
+            "datas": []
+        }
+def process_frame(allFrame,nowFrame,time_second, fps, img_bgr):
+    """
+    :param time_second: 当前处理的秒数
+    :param fps:
+    :param img_bgr:
+    :return:
+    """
+    """"""
+    print(f"==========开始处理 allFrame:{allFrame - 1},nowFrame:{nowFrame}")
+    if nowFrame == 0:
+        print("开始处理此视频文件")
+        #初始化写入文件到json数据
+        outputJsonData["resultCode"] = "0"
+        outputJsonData["resultMsg"] = "成功"
+        outputJsonData["videoName"] = "204教师2023-07-09第一节课.mp4"
+        """""
+        outputJsonData = {
+            "resultCode": "0",
+            "resultMsg": "成功",
+            "detectStartTimeTemp": "1686236423565",
+            "detectFinishTemp": "1686236423565",
+            "videoName": "204教师2023-07-09第一节课.mp4",
+            "datas": []
+        }
+        """""
 
-def process_frame(time_second, fps, img_bgr):
-    print("==========开始处理")
+    if nowFrame == allFrame- 1:
+        # 将数据保存到本地文件
+        output_file = "output.json"
+        # 获取要保存的JSON字符串
+        json_str = json.dumps(outputJsonData, indent=2, ensure_ascii=False)
+        # 获取要写入的字符长度
+        total_chars = len(json_str)
+        # 使用tqdm显示文件写入的进度
+        with open(output_file, "w") as f:
+            for char in tqdm(json_str, desc="写入进度", total=total_chars):
+                f.write(char)
+        print(f"此视频文件处理完毕 输出分析文件 ==========================>{output_file}")
 
     # 在视频左上角显示出当前的秒数
     text_position = (20, 50)  # 文字位置坐标 (x, y)
@@ -186,7 +231,7 @@ def process_frame(time_second, fps, img_bgr):
             #这里循环遍历了单个人的骨架
             utils.addPoseLineData(srt_kpt_x, srt_kpt_y, dst_kpt_x, dst_kpt_y)
 
-            def my_callback(sitOrStand, headAction, riseHand):
+            def one_frame_callback(sitOrStand, headAction, riseHand):
                 # 在回调函数中处理接收到的参数-tips:这里1s回调一次
                 nonlocal headposeStatus
                 nonlocal sitOrStandStatus
@@ -195,9 +240,32 @@ def process_frame(time_second, fps, img_bgr):
                 sitOrStandStatus = sitOrStand
                 riseHandStatus = riseHand
 
+            def one_second_callback(second,bodyTrackCount, siteSumCount, standSumCount,headUpSumCount,headFrontSumCount,headDownSumCount):
+                """
+                这一秒的分析结果回调
+                :param bodyTrackCount: 识别人员数量
+                :param siteSumCount:  坐姿人员数量
+                :param standSumCount: 站姿人员数量
+                :param headUpSumCount:  抬头人员数量
+                :param headFrontSumCount: 平视人员数量
+                :param headDownSumCount:  低头人员书路那个
+                :return:
+                """
+                data_point_1 = {
+                    "time": str(second),
+                    "personCount": bodyTrackCount,
+                    "sitCount":siteSumCount,
+                    "standCount": standSumCount,
+                    "headUpCount": headUpSumCount,
+                    "headFrontCount": headFrontSumCount,
+                    "headDownCount": headDownSumCount,
+                }
+                outputJsonData["datas"].append(data_point_1)
+
+
             # 最后一个数据处理完毕,开始进行向量角计算
             if lineIndex == len(skeleton_map):
-                utils.startCaculate(id_list[closest_idx],time_second,fps,my_callback)
+                utils.startCaculate(id_list[closest_idx],time_second,fps,one_frame_callback,one_second_callback)
 
             # 获取骨架连接颜色
             skeleton_color = skeleton['color']
@@ -320,7 +388,7 @@ def generate_video(input_path='video/1.mp4'):
                     time_per_frame = 1 / fps
                     time_in_seconds = int(pbar.n * time_per_frame)
                     print(f"分析此帧数据：{time_in_seconds} 秒")
-                    frame = process_frame(time_in_seconds,fps, frame)
+                    frame = process_frame((frame_count - 1),pbar.n,time_in_seconds,fps, frame)
                 except:
                     print('error')
                     pass
